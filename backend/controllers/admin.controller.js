@@ -10,6 +10,17 @@ export const obtenerProfesores = async (req, res) => {
     }
 };
 
+import { obtenerReportesTotales } from '../models/reportes.model.js';
+
+export const obtenerReportesGenerales = async (req, res) => {
+  try {
+    const data = await obtenerReportesTotales();
+    res.status(200).json(data);
+  } catch (err) {
+    res.status(500).json({ message: 'Error al obtener reportes generales', error: err.message });
+  }
+};
+
 // Agregar un profesor
 export const agregarProfesor = async (req, res) => {
     try {

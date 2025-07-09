@@ -1,4 +1,5 @@
 import { Router } from 'express';
+import { enviarCorreo } from '../controllers/profesor.controller.js';
 import {
     obtenerAlumnos,
     agregarAlumno,
@@ -20,5 +21,5 @@ router.delete('/alumnos/:id', borrarAlumno);
 
 router.post('/asistencia', tomarAsistencia);
 router.post('/uniforme', registrarFaltaUniforme);
-
+router.post('/enviar-correo', enviarCorreo);
 export default router;

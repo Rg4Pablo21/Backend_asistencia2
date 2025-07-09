@@ -3,6 +3,7 @@ import express from 'express';
 import cors from 'cors';
 import morgan from 'morgan';
 import './backend/config/dotenv.js';
+import correoRoutes from './backend/routes/correo.routes.js'; 
 
 import authRoutes from './backend/routes/auth.routes.js';
 import profesorRoutes from './backend/routes/profesor.routes.js';
@@ -29,6 +30,12 @@ app.use(morgan('dev'));
 app.use('/api/auth', authRoutes);
 app.use('/api/profesor', profesorRoutes);
 app.use('/api/admin', adminRoutes);
+
+
+// Ruta de correo 
+app.use('/api', correoRoutes);
+
+
 
 // 🧪 Ruta de prueba
 app.get('/', (req, res) => {

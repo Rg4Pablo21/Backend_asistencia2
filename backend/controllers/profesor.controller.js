@@ -1,6 +1,7 @@
 import { getAlumnosPorGrado, crearAlumno, eliminarAlumno } from '../models/alumno.model.js';
 import { registrarAsistencia, verificarAsistencia, modificarAsistencia } from '../models/asistencia.model.js';
 import { registrarUniforme } from '../models/uniforme.model.js';
+import { guardarCorreo } from '../models/correo.model.js';
 
 // Ver alumnos de un grado
 export const obtenerAlumnos = async (req, res) => {
@@ -65,5 +66,28 @@ export const registrarFaltaUniforme = async (req, res) => {
         res.status(201).json({ message: 'Falta de uniforme registrada' });
     } catch (err) {
         res.status(500).json({ message: 'Error al registrar uniforme', error: err.message });
+    }
+};
+
+// Enviar correo
+export const enviarCorreo = async (req, res) => {
+    try {
+        const { destino, asunto, mensaje } = req.body;
+
+        if (!destino || !asunto || !mensaje) {
+            return res.status(400).json({ message: 'Faltan campos requeridos' });
+        }
+
+        // Simular envío real
+        console.log('📧 Enviando correo a:', destino);
+        console.log('Asunto:', asunto);
+        console.log('Mensaje:', mensaje);
+
+        // Guardar en historial de correos
+        await guardarCorreo(destino, asunto, mensaje, req.user.id);
+
+        res.status(200).json({ message: 'Correo enviado correctamente (simulado)' });
+    } catch (err) {
+        res.status(500).json({ message: 'Error al enviar correo', error: err.message });
     }
 };
