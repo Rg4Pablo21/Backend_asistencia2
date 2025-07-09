@@ -48,7 +48,7 @@ export const register = async (req, res) => {
             [nombre, correo, hashedPassword, rol]
         );
         console.log('✅ Usuario registrado:', correo);
-        res.status(201).json({ message: 'Usuario registrado correctamente' });
+        res.status(201).json({ message: 'Usuario registrado correctamente', rol });
     } catch (err) {
         console.error('❌ Error al registrar usuario:', err);
         res.status(500).json({ message: 'Error al registrar usuario', error: err.message });

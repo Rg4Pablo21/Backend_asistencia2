@@ -3,8 +3,8 @@ import express from 'express';
 import cors from 'cors';
 import morgan from 'morgan';
 import './backend/config/dotenv.js';
-import correoRoutes from './backend/routes/correo.routes.js'; 
 
+import correoRoutes from './backend/routes/correo.routes.js';
 import authRoutes from './backend/routes/auth.routes.js';
 import profesorRoutes from './backend/routes/profesor.routes.js';
 import adminRoutes from './backend/routes/admin.routes.js';
@@ -12,9 +12,13 @@ import adminRoutes from './backend/routes/admin.routes.js';
 const app = express();
 const PORT = process.env.PORT || 4000;
 
-// 🛡️ Middleware de seguridad CORS (ajustado al frontend local)
+// 🛡️ Middleware de seguridad CORS (permite local y producción)
 app.use(cors({
-  origin: ['http://127.0.0.1:5500', 'http://localhost:5500'],
+  origin: [
+    'http://127.0.0.1:5500',
+    'http://localhost:5500',
+    'https://backend-asistencia2-2.onrender.com'
+  ],
   methods: ['GET', 'POST', 'PUT', 'DELETE'],
   credentials: true,
   allowedHeaders: ['Content-Type', 'Authorization']
@@ -30,12 +34,7 @@ app.use(morgan('dev'));
 app.use('/api/auth', authRoutes);
 app.use('/api/profesor', profesorRoutes);
 app.use('/api/admin', adminRoutes);
-
-
-// Ruta de correo 
-app.use('/api', correoRoutes);
-
-
+app.use('/api', correoRoutes); // Envío de correos
 
 // 🧪 Ruta de prueba
 app.get('/', (req, res) => {
