@@ -1,18 +1,23 @@
-// backend/controllers/admin.controller.js
 import {
-  crearNivelDB,
-  obtenerNivelesConGrados,
-  eliminarNivelYGrados,
-  crearGradoDB,
-  eliminarGradoDB
+  getNivelesConGrados,
+  insertNivel,
+  deleteNivel,
+  insertGrado,
+  deleteGrado
 } from '../models/nivel.model.js';
+
+import {
+  getProfesores,
+  insertProfesor,
+  deleteProfesor,
+  asignarGrado
+} from '../models/profesor.model.js';
 
 export const obtenerNiveles = async (req, res) => {
   try {
-    const niveles = await obtenerNivelesConGrados();
+    const niveles = await getNivelesConGrados();
     res.json(niveles);
-  } catch (error) {
-    console.error('Error al obtener niveles:', error);
+  } catch (err) {
     res.status(500).json({ message: 'Error al obtener niveles' });
   }
 };
@@ -20,12 +25,9 @@ export const obtenerNiveles = async (req, res) => {
 export const crearNivel = async (req, res) => {
   try {
     const { nombre } = req.body;
-    if (!nombre) return res.status(400).json({ message: 'Falta el nombre del nivel' });
-
-    const id = await crearNivelDB(nombre);
-    res.status(201).json({ id, nombre });
-  } catch (error) {
-    console.error('Error al crear nivel:', error);
+    await insertNivel(nombre);
+    res.status(201).json({ message: 'Nivel creado' });
+  } catch (err) {
     res.status(500).json({ message: 'Error al crear nivel' });
   }
 };
@@ -33,10 +35,9 @@ export const crearNivel = async (req, res) => {
 export const eliminarNivel = async (req, res) => {
   try {
     const id = req.params.id;
-    await eliminarNivelYGrados(id);
-    res.json({ message: 'Nivel y sus grados eliminados' });
-  } catch (error) {
-    console.error('Error al eliminar nivel:', error);
+    await deleteNivel(id);
+    res.json({ message: 'Nivel eliminado' });
+  } catch (err) {
     res.status(500).json({ message: 'Error al eliminar nivel' });
   }
 };
@@ -44,12 +45,9 @@ export const eliminarNivel = async (req, res) => {
 export const agregarGrado = async (req, res) => {
   try {
     const { nombre, nivel_id } = req.body;
-    if (!nombre || !nivel_id) return res.status(400).json({ message: 'Faltan datos' });
-
-    const id = await crearGradoDB(nombre, nivel_id);
-    res.status(201).json({ id, nombre });
-  } catch (error) {
-    console.error('Error al agregar grado:', error);
+    await insertGrado(nombre, nivel_id);
+    res.status(201).json({ message: 'Grado agregado' });
+  } catch (err) {
     res.status(500).json({ message: 'Error al agregar grado' });
   }
 };
@@ -57,10 +55,48 @@ export const agregarGrado = async (req, res) => {
 export const eliminarGrado = async (req, res) => {
   try {
     const id = req.params.id;
-    await eliminarGradoDB(id);
+    await deleteGrado(id);
     res.json({ message: 'Grado eliminado' });
-  } catch (error) {
-    console.error('Error al eliminar grado:', error);
+  } catch (err) {
     res.status(500).json({ message: 'Error al eliminar grado' });
+  }
+};
+
+export const obtenerProfesores = async (req, res) => {
+  try {
+    const profesores = await getProfesores();
+    res.json(profesores);
+  } catch (err) {
+    res.status(500).json({ message: 'Error al obtener profesores' });
+  }
+};
+
+export const crearProfesor = async (req, res) => {
+  try {
+    const { nombre, correo, password } = req.body;
+    await insertProfesor(nombre, correo, password);
+    res.status(201).json({ message: 'Profesor creado' });
+  } catch (err) {
+    res.status(500).json({ message: 'Error al crear profesor' });
+  }
+};
+
+export const eliminarProfesor = async (req, res) => {
+  try {
+    const id = req.params.id;
+    await deleteProfesor(id);
+    res.json({ message: 'Profesor eliminado' });
+  } catch (err) {
+    res.status(500).json({ message: 'Error al eliminar profesor' });
+  }
+};
+
+export const asignarGradoAProfesor = async (req, res) => {
+  try {
+    const { profesor_id, grado_id } = req.body;
+    await asignarGrado(profesor_id, grado_id);
+    res.status(201).json({ message: 'Grado asignado correctamente' });
+  } catch (err) {
+    res.status(500).json({ message: 'Error al asignar grado' });
   }
 };

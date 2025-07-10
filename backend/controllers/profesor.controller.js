@@ -13,6 +13,8 @@ import {
 import { registrarUniforme } from '../models/uniforme.model.js';
 import { guardarCorreo } from '../models/correo.model.js';
 import pool from '../config/db.js';
+import bcrypt from 'bcryptjs';
+import { findUserById } from '../models/usuario.model.js';
 
 // 🔹 Obtener grados asignados al profesor
 export const obtenerGradosAsignados = async (req, res) => {
@@ -59,13 +61,30 @@ export const agregarAlumno = async (req, res) => {
   }
 };
 
-// 🔹 Eliminar alumno
+// 🔹 Eliminar alumno con verificación de contraseña del profesor
 export const borrarAlumno = async (req, res) => {
   try {
     const id = req.params.id;
+    const { password } = req.body;
+
+    if (!password) {
+      return res.status(400).json({ message: 'Contraseña requerida' });
+    }
+
+    const profesor = await findUserById(req.userId);
+    if (!profesor) {
+      return res.status(404).json({ message: 'Profesor no encontrado' });
+    }
+
+    const passwordValida = await bcrypt.compare(password, profesor.password);
+    if (!passwordValida) {
+      return res.status(401).json({ message: 'Contraseña incorrecta' });
+    }
+
     const deleted = await eliminarAlumno(id);
     if (!deleted) return res.status(404).json({ message: 'Alumno no encontrado' });
-    res.json({ message: 'Alumno eliminado' });
+
+    res.json({ message: 'Alumno eliminado correctamente' });
   } catch (err) {
     console.error('❌ Error al eliminar alumno:', err);
     res.status(500).json({ message: 'Error al eliminar alumno' });

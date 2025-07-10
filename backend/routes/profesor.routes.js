@@ -1,4 +1,3 @@
-// backend/routes/profesor.routes.js
 import { Router } from 'express';
 import {
   obtenerAlumnos,
@@ -22,7 +21,7 @@ router.use(verifyToken, isProfesor);
 router.get('/grados', obtenerGradosAsignados);
 router.get('/alumnos/:grado_id', obtenerAlumnos);
 router.post('/alumnos', agregarAlumno);
-router.delete('/alumnos/:id', borrarAlumno);
+router.delete('/alumnos/:id', borrarAlumno);  // 🔐 incluye confirmación de contraseña
 router.post('/asistencia', tomarAsistencia);
 router.post('/uniforme', registrarFaltaUniforme);
 router.post('/enviar-correo', enviarCorreo);
