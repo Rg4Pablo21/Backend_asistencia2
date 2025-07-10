@@ -1,4 +1,4 @@
-import pool from '../config/conexion.js';
+import pool from '../config/db.js';
 import bcrypt from 'bcryptjs';
 
 // Obtener todos los profesores (rol = 'profesor')
