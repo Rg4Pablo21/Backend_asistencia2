@@ -1,116 +1,126 @@
 import {
-    getAlumnosPorGrado,
-    crearAlumno,
-    eliminarAlumno
-  } from '../models/alumno.model.js';
-  
-  import {
-    registrarAsistencia,
-    verificarAsistencia,
-    modificarAsistencia
-  } from '../models/asistencia.model.js';
-  
-  import { registrarUniforme } from '../models/uniforme.model.js';
-  import { guardarCorreo } from '../models/correo.model.js';
-  import { obtenerGradosPorProfesor } from '../models/grado.model.js';
-  
-  // Ver grados asignados al profesor
-  export const obtenerGradosAsignados = async (req, res) => {
-    try {
-      const profesorId = req.user.id;
-      const grados = await obtenerGradosPorProfesor(profesorId);
-      res.status(200).json(grados);
-    } catch (err) {
-      res.status(500).json({ message: 'Error al obtener grados asignados', error: err.message });
+  getAlumnosPorGrado,
+  crearAlumno,
+  eliminarAlumno
+} from '../models/alumno.model.js';
+
+import {
+  registrarAsistencia,
+  verificarAsistencia,
+  modificarAsistencia
+} from '../models/asistencia.model.js';
+
+import { registrarUniforme } from '../models/uniforme.model.js';
+import { guardarCorreo } from '../models/correo.model.js';
+import pool from '../config/db.js';
+
+// 🔹 Obtener grados asignados al profesor
+export const obtenerGradosAsignados = async (req, res) => {
+  try {
+    const profesor_id = req.userId;
+    const [grados] = await pool.query(`
+      SELECT g.id, g.nombre 
+      FROM grados g
+      JOIN profesores_grados pg ON pg.grado_id = g.id
+      WHERE pg.profesor_id = ?
+    `, [profesor_id]);
+
+    res.json(grados);
+  } catch (err) {
+    console.error('❌ Error al obtener grados asignados:', err);
+    res.status(500).json({ message: 'Error al obtener grados' });
+  }
+};
+
+// 🔹 Obtener alumnos por grado
+export const obtenerAlumnos = async (req, res) => {
+  try {
+    const grado_id = req.params.grado_id;
+    const alumnos = await getAlumnosPorGrado(grado_id);
+    res.json(alumnos);
+  } catch (err) {
+    console.error('❌ Error al obtener alumnos:', err);
+    res.status(500).json({ message: 'Error al obtener alumnos' });
+  }
+};
+
+// 🔹 Agregar alumno
+export const agregarAlumno = async (req, res) => {
+  try {
+    const { nombre, correo, grado_id } = req.body;
+    if (!nombre || !correo || !grado_id) {
+      return res.status(400).json({ message: 'Faltan datos' });
     }
-  };
-  
-  // Ver alumnos de un grado
-  export const obtenerAlumnos = async (req, res) => {
-    try {
-      const { grado_id } = req.params;
-      const alumnos = await getAlumnosPorGrado(grado_id);
-      res.status(200).json(alumnos);
-    } catch (err) {
-      res.status(500).json({ message: 'Error al obtener alumnos', error: err.message });
-    }
-  };
-  
-  // Agregar alumno
-  export const agregarAlumno = async (req, res) => {
-    try {
-      const { nombre, correo, grado_id } = req.body;
-      const alumnoId = await crearAlumno(nombre, correo, grado_id);
-      res.status(201).json({ message: 'Alumno agregado', alumnoId });
-    } catch (err) {
-      res.status(500).json({ message: 'Error al agregar alumno', error: err.message });
-    }
-  };
-  
-  // Eliminar alumno
-  export const borrarAlumno = async (req, res) => {
-    try {
-      const { id } = req.params;
-      const deleted = await eliminarAlumno(id);
-      if (deleted) {
-        res.status(200).json({ message: 'Alumno eliminado' });
+    const id = await crearAlumno(nombre, correo, grado_id);
+    res.status(201).json({ message: 'Alumno creado', id });
+  } catch (err) {
+    console.error('❌ Error al agregar alumno:', err);
+    res.status(500).json({ message: 'Error al agregar alumno' });
+  }
+};
+
+// 🔹 Eliminar alumno
+export const borrarAlumno = async (req, res) => {
+  try {
+    const id = req.params.id;
+    const deleted = await eliminarAlumno(id);
+    if (!deleted) return res.status(404).json({ message: 'Alumno no encontrado' });
+    res.json({ message: 'Alumno eliminado' });
+  } catch (err) {
+    console.error('❌ Error al eliminar alumno:', err);
+    res.status(500).json({ message: 'Error al eliminar alumno' });
+  }
+};
+
+// 🔹 Tomar asistencia
+export const tomarAsistencia = async (req, res) => {
+  try {
+    const { fecha, asistencia } = req.body;
+    for (const alumno_id in asistencia) {
+      const { presente, tarde } = asistencia[alumno_id];
+      const existente = await verificarAsistencia(alumno_id, fecha);
+      if (existente) {
+        await modificarAsistencia(existente.id, presente, tarde || false);
       } else {
-        res.status(404).json({ message: 'Alumno no encontrado' });
+        await registrarAsistencia(alumno_id, fecha, presente, tarde || false);
       }
-    } catch (err) {
-      res.status(500).json({ message: 'Error al eliminar alumno', error: err.message });
     }
-  };
-  
-  // Registrar asistencia
-  export const tomarAsistencia = async (req, res) => {
-    try {
-      const { alumno_id, fecha, presente, tarde } = req.body;
-  
-      const yaRegistrado = await verificarAsistencia(alumno_id, fecha);
-      if (yaRegistrado) {
-        await modificarAsistencia(yaRegistrado.id, presente, tarde);
-        res.status(200).json({ message: 'Asistencia actualizada' });
-      } else {
-        await registrarAsistencia(alumno_id, fecha, presente, tarde);
-        res.status(201).json({ message: 'Asistencia registrada' });
-      }
-    } catch (err) {
-      res.status(500).json({ message: 'Error al tomar asistencia', error: err.message });
+    res.json({ message: '✅ Asistencia guardada correctamente' });
+  } catch (err) {
+    console.error('❌ Error al tomar asistencia:', err);
+    res.status(500).json({ message: 'Error al tomar asistencia' });
+  }
+};
+
+// 🔹 Registrar uniforme
+export const registrarFaltaUniforme = async (req, res) => {
+  try {
+    const { alumno_id, fecha, uniforme } = req.body;
+    if (!alumno_id || !fecha || !uniforme) {
+      return res.status(400).json({ message: 'Datos incompletos' });
     }
-  };
-  
-  // Registrar faltas de uniforme
-  export const registrarFaltaUniforme = async (req, res) => {
-    try {
-      const { alumno_id, fecha, uniforme } = req.body;
-      await registrarUniforme(alumno_id, fecha, uniforme);
-      res.status(201).json({ message: 'Falta de uniforme registrada' });
-    } catch (err) {
-      res.status(500).json({ message: 'Error al registrar uniforme', error: err.message });
+    const id = await registrarUniforme(alumno_id, fecha, uniforme);
+    res.status(201).json({ message: '✅ Uniforme registrado', id });
+  } catch (err) {
+    console.error('❌ Error al registrar uniforme:', err);
+    res.status(500).json({ message: 'Error al registrar uniforme' });
+  }
+};
+
+// 🔹 Enviar correo
+export const enviarCorreo = async (req, res) => {
+  try {
+    const { destino, asunto, mensaje } = req.body;
+    const enviado_por = req.userId;
+
+    if (!destino || !asunto || !mensaje) {
+      return res.status(400).json({ message: 'Faltan campos requeridos' });
     }
-  };
-  
-  // Enviar correo
-  export const enviarCorreo = async (req, res) => {
-    try {
-      const { destino, asunto, mensaje } = req.body;
-  
-      if (!destino || !asunto || !mensaje) {
-        return res.status(400).json({ message: 'Faltan campos requeridos' });
-      }
-  
-      // Simular envío real
-      console.log('📧 Enviando correo a:', destino);
-      console.log('Asunto:', asunto);
-      console.log('Mensaje:', mensaje);
-  
-      // Guardar en historial de correos
-      await guardarCorreo(destino, asunto, mensaje, req.user.id);
-  
-      res.status(200).json({ message: 'Correo enviado correctamente (simulado)' });
-    } catch (err) {
-      res.status(500).json({ message: 'Error al enviar correo', error: err.message });
-    }
-  };
-  
+
+    await guardarCorreo({ destino, asunto, mensaje, enviado_por });
+    res.status(201).json({ message: '📨 Correo enviado correctamente' });
+  } catch (err) {
+    console.error('❌ Error al enviar correo:', err);
+    res.status(500).json({ message: 'Error al enviar correo', error: err.message });
+  }
+};

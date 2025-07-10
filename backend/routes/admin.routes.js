@@ -1,38 +1,26 @@
+// backend/routes/admin.routes.js
 import { Router } from 'express';
 import {
-  obtenerProfesores,
-  agregarProfesor,
-  eliminarProfesor,
   obtenerNiveles,
   crearNivel,
   eliminarNivel,
   agregarGrado,
-  eliminarGrado,
-  obtenerReportesGenerales
+  eliminarGrado
 } from '../controllers/admin.controller.js';
-
-import { verifyToken } from '../middlewares/auth.middleware.js';
-import { isAdmin } from '../middlewares/roles.middleware.js';
+import { verifyToken, verificarAdmin } from '../middlewares/auth.middleware.js';
 
 const router = Router();
 
-// Middleware global: solo admins autenticados
-router.use(verifyToken, isAdmin);
+// Middleware: solo administradores
+router.use(verifyToken, verificarAdmin);
 
-// Profesores
-router.get('/profesores', obtenerProfesores);
-router.post('/profesores', agregarProfesor);
-router.delete('/profesores/:id', eliminarProfesor);
-
-// Niveles y Grados
+// Niveles
 router.get('/niveles', obtenerNiveles);
 router.post('/niveles', crearNivel);
 router.delete('/niveles/:id', eliminarNivel);
 
+// Grados
 router.post('/grados', agregarGrado);
 router.delete('/grados/:id', eliminarGrado);
-
-// Reportes
-router.get('/reportes', obtenerReportesGenerales);
 
 export default router;
