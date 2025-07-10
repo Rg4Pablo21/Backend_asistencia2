@@ -1,14 +1,15 @@
-// backend/server.js
+// server.js
 import express from 'express';
 import cors from 'cors';
 import morgan from 'morgan';
-import './config/dotenv.js'; // Ruta corregida
+import dotenv from 'dotenv';
+dotenv.config(); // ✅ Cargar variables de entorno
 
-// 🔗 Importar rutas
-import correoRoutes from './routes/correo.routes.js';
-import authRoutes from './routes/auth.routes.js';
-import profesorRoutes from './routes/profesor.routes.js';
-import adminRoutes from './routes/admin.routes.js';
+// ✅ Rutas correctamente referenciadas desde backend/
+import correoRoutes from './backend/routes/correo.routes.js';
+import authRoutes from './backend/routes/auth.routes.js';
+import profesorRoutes from './backend/routes/profesor.routes.js';
+import adminRoutes from './backend/routes/admin.routes.js';
 
 const app = express();
 const PORT = process.env.PORT || 4000;
@@ -35,7 +36,7 @@ app.use(morgan('dev'));
 app.use('/api/auth', authRoutes);
 app.use('/api/profesor', profesorRoutes);
 app.use('/api/admin', adminRoutes);
-app.use('/api', correoRoutes); // correos
+app.use('/api', correoRoutes);
 
 // 🧪 Ruta de prueba
 app.get('/', (req, res) => {

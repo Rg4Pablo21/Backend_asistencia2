@@ -1,8 +1,18 @@
 import bcrypt from 'bcrypt';
 import pool from '../config/db.js';
-import { obtenerReportesTotales } from '../models/reportes.model.js';
 
-// PROFESORES
+import { obtenerReportesTotales } from '../models/reportes.model.js';
+import {
+  crearNivel as modeloCrearNivel,
+  obtenerNivelesConGrados,
+  eliminarNivelYGrados
+} from '../models/nivel.model.js';
+import {
+  agregarGrado as modeloAgregarGrado,
+  eliminarGrado as modeloEliminarGrado
+} from '../models/grado.model.js';
+
+// ===================== PROFESORES =====================
 export const obtenerProfesores = async (req, res) => {
   try {
     const [rows] = await pool.query('SELECT * FROM usuarios WHERE rol = "profesor"');
@@ -40,14 +50,10 @@ export const eliminarProfesor = async (req, res) => {
   }
 };
 
-// NIVELES Y GRADOS
+// ===================== NIVELES Y GRADOS =====================
 export const obtenerNiveles = async (req, res) => {
   try {
-    const [niveles] = await pool.query('SELECT * FROM niveles');
-    for (const nivel of niveles) {
-      const [grados] = await pool.query('SELECT * FROM grados WHERE nivel_id = ?', [nivel.id]);
-      nivel.grados = grados;
-    }
+    const niveles = await obtenerNivelesConGrados();
     res.status(200).json(niveles);
   } catch (err) {
     res.status(500).json({ message: 'Error al obtener niveles', error: err.message });
@@ -57,7 +63,7 @@ export const obtenerNiveles = async (req, res) => {
 export const crearNivel = async (req, res) => {
   try {
     const { nombre } = req.body;
-    await pool.query('INSERT INTO niveles (nombre) VALUES (?)', [nombre]);
+    await modeloCrearNivel(nombre);
     res.status(201).json({ message: 'Nivel creado correctamente' });
   } catch (err) {
     res.status(500).json({ message: 'Error al crear nivel', error: err.message });
@@ -67,8 +73,7 @@ export const crearNivel = async (req, res) => {
 export const eliminarNivel = async (req, res) => {
   try {
     const { id } = req.params;
-    await pool.query('DELETE FROM grados WHERE nivel_id = ?', [id]); // Elimina grados primero
-    await pool.query('DELETE FROM niveles WHERE id = ?', [id]); // Luego el nivel
+    await eliminarNivelYGrados(id);
     res.status(200).json({ message: 'Nivel y grados eliminados' });
   } catch (err) {
     res.status(500).json({ message: 'Error al eliminar nivel', error: err.message });
@@ -78,7 +83,7 @@ export const eliminarNivel = async (req, res) => {
 export const agregarGrado = async (req, res) => {
   try {
     const { nombre, nivel_id } = req.body;
-    await pool.query('INSERT INTO grados (nombre, nivel_id) VALUES (?, ?)', [nombre, nivel_id]);
+    await modeloAgregarGrado(nombre, nivel_id);
     res.status(201).json({ message: 'Grado agregado correctamente' });
   } catch (err) {
     res.status(500).json({ message: 'Error al agregar grado', error: err.message });
@@ -88,14 +93,14 @@ export const agregarGrado = async (req, res) => {
 export const eliminarGrado = async (req, res) => {
   try {
     const { id } = req.params;
-    await pool.query('DELETE FROM grados WHERE id = ?', [id]);
+    await modeloEliminarGrado(id);
     res.status(200).json({ message: 'Grado eliminado correctamente' });
   } catch (err) {
     res.status(500).json({ message: 'Error al eliminar grado', error: err.message });
   }
 };
 
-// REPORTES
+// ===================== REPORTES =====================
 export const obtenerReportesGenerales = async (req, res) => {
   try {
     const data = await obtenerReportesTotales();
